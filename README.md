@@ -34,8 +34,8 @@ ERPNext budget management goes beyond annual limits by providing monthly distrib
 - ⚠️ **Warn** users while allowing transactions
 
 Configuration options:
-- `Action if Monthly Budget Exceeded = Stop`
-- `Action if Monthly Budget Exceeded = Warn`
+- `Action Action if Monthly Budget Exceeded on PO = Stop`
+- `Action Action if Monthly Budget Exceeded on PO = Warn`
 
 ---
 
