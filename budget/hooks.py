@@ -236,7 +236,7 @@ fixtures = [
     },
     {
         "dt": "Custom HTML Block",
-        "filters": [["module", "=", "Budge"]]
+        "filters": [["name", "in", ["Budget reports"]]]
     },
     {
         "dt": "Number Card",
