@@ -6,7 +6,7 @@
   }
  ],
  "content": "[{\"id\":\"jxElEZDoqz\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h2\\\">Budget &amp; Treasury bills</span>\",\"col\":12}},{\"id\":\"BLOi5_JNJt\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Active Budget\",\"col\":4}},{\"id\":\"jFI1UJSpv8\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Cancelled Budget\",\"col\":4}},{\"id\":\"G7fUZWwybv\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Budget Requests\",\"col\":4}},{\"id\":\"EVpwSC6UXU\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Treasury Bills Sessions\",\"col\":12}},{\"id\":\"k8ItoFyOnh\",\"type\":\"card\",\"data\":{\"card_name\":\"Budget\",\"col\":4}},{\"id\":\"Og1-31CSU7\",\"type\":\"card\",\"data\":{\"card_name\":\"Treasury Bills\",\"col\":4}},{\"id\":\"phO4gfxB97\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Budget reports\",\"col\":12}}]",
- "creation": "2024-04-30 12:28:47.708082",
+ "creation": "2025-08-23 10:16:18.504735",
  "custom_blocks": [
   {
    "custom_block_name": "Budget reports",
@@ -62,6 +62,93 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Treasury Bills",
+   "link_count": 2,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Budget Control",
+   "link_count": 0,
+   "link_to": "Budget Control",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Budget Request",
+   "link_count": 0,
+   "link_to": "Budget Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Treasury bills",
+   "link_count": 0,
+   "link_to": "Treasury bills",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Budget",
+   "link_count": 0,
+   "link_to": "Budget",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Treasury bill setting",
+   "link_count": 0,
+   "link_to": "Treasury bill setting",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Budget",
+   "link_count": 5,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Monthly Distribution",
+   "link_count": 0,
+   "link_to": "Monthly Distribution",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Budget Control Log",
+   "link_count": 0,
+   "link_to": "Budget Control Log",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Budget Control",
    "link_count": 0,
    "link_to": "Budget Control",
@@ -110,7 +197,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-08-23 02:10:01.307432",
+ "modified": "2025-08-23 10:17:32.745312",
  "modified_by": "Administrator",
  "module": "budge",
  "name": "Budget & Treasury bills",
@@ -128,7 +215,6 @@
    "number_card_name": "Active Budget"
   }
  ],
- "owner": "ahmed.radwan@datasofteg.com",
  "parent_page": "",
  "public": 1,
  "quick_lists": [],

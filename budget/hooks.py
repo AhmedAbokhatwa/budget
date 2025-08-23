@@ -229,27 +229,10 @@ fixtures = [
         "dt": "DocType Link",
         "filters": [["parent", "in", ["Budget Control", "Budget Request"]]]
     },
-
      {
         "dt": "Custom Field",
         "filters": [
-            ["dt", "in", [
-                "Item",
-                "Executed prices",
-                "Announced prices",
-                "Treasury bill setting",
-                "Treasury bills",
-                "Budget Control",
-                "Budget Request",
-                "Monthly Distribution",
-                "Monthly Distribution Percentage",
-                "Budget",
-                "Budget Account",
-                "Budget Items Details",
-                "Items Summary",
-                "Item Department",
-                "Budget Control Log"
-            ]]
+            ["module", "=", "budge"]
         ]
     },
     {
