@@ -484,7 +484,7 @@ frappe.ui.form.on('Budget Control', {
                                 color: var(--text-color, #374151);
                                 border-radius: 4px;
                                 font-size: 13px;
-                                padding: 8px 12px;
+                                padding: 4px 12px;
                                 transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
                             }
                             
