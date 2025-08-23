@@ -229,6 +229,7 @@ fixtures = [
         "dt": "Custom Field",
         "filters": [
             ["dt", "in", [
+                "Item",
                 "Executed prices",
                 "Announced prices",
                 "Treasury bill setting",
