@@ -71,6 +71,7 @@ app_license = "MIT"
 
 # before_uninstall = "budget.uninstall.before_uninstall"
 # after_uninstall = "budget.uninstall.after_uninstall"
+before_uninstall = "budget.patches.v15_0.remove_budget_field.execute"
 
 # Integration Setup
 # ------------------
