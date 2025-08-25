@@ -9,7 +9,17 @@ frappe.ui.form.on('Budget Control', {
             }, __('Budget Tools'));
 
             frm.add_custom_button(__('🗑️ Delete Budget'), function() {
-                delete_budget_monthly_distribution(frm);
+                frappe.confirm(
+                    __('Are you sure you want to delete this Budget?'),
+                    function() {
+                        // ✅ If confirmed
+                        delete_budget_monthly_distribution(frm);
+                    },
+                    function() {
+                        // ❌ If cancelled
+                        frappe.show_alert({message: __('Action Cancelled'), indicator: 'blue'});
+                    }
+                );
             }, __('Actions'));
             // Add custom CSS for the dashboard
             // ==============================================================================

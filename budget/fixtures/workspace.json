@@ -2,7 +2,7 @@
  {
   "charts": [
    {
-    "chart_name": "\u062c\u0644\u0633\u0627\u062a \u0627\u0630\u0648\u0646 \u0627\u0644\u062e\u0632\u0627\u0646\u0647",
+    "chart_name": "جلسات اذون الخزانه",
     "label": "Treasury Bills Sessions",
     "parent": "Budget & Treasury bills",
     "parentfield": "charts",
@@ -24,11 +24,13 @@
   "for_user": "",
   "hide_custom": 0,
   "icon": "income",
+  "indicator_color": null,
   "is_hidden": 0,
   "label": "Budget & Treasury bills",
   "links": [
    {
     "dependencies": null,
+    "description": null,
     "hidden": 0,
     "icon": null,
     "is_query_report": 0,
@@ -41,10 +43,12 @@
     "parent": "Budget & Treasury bills",
     "parentfield": "links",
     "parenttype": "Workspace",
+    "report_ref_doctype": null,
     "type": "Card Break"
    },
    {
     "dependencies": null,
+    "description": null,
     "hidden": 0,
     "icon": null,
     "is_query_report": 0,
@@ -57,10 +61,12 @@
     "parent": "Budget & Treasury bills",
     "parentfield": "links",
     "parenttype": "Workspace",
+    "report_ref_doctype": null,
     "type": "Link"
    },
    {
     "dependencies": null,
+    "description": null,
     "hidden": 0,
     "icon": null,
     "is_query_report": 0,
@@ -73,10 +79,12 @@
     "parent": "Budget & Treasury bills",
     "parentfield": "links",
     "parenttype": "Workspace",
+    "report_ref_doctype": null,
     "type": "Link"
    },
    {
     "dependencies": null,
+    "description": null,
     "hidden": 0,
     "icon": null,
     "is_query_report": 0,
@@ -89,10 +97,12 @@
     "parent": "Budget & Treasury bills",
     "parentfield": "links",
     "parenttype": "Workspace",
+    "report_ref_doctype": null,
     "type": "Card Break"
    },
    {
     "dependencies": null,
+    "description": null,
     "hidden": 0,
     "icon": null,
     "is_query_report": 0,
@@ -105,10 +115,12 @@
     "parent": "Budget & Treasury bills",
     "parentfield": "links",
     "parenttype": "Workspace",
+    "report_ref_doctype": null,
     "type": "Card Break"
    },
    {
     "dependencies": null,
+    "description": null,
     "hidden": 0,
     "icon": null,
     "is_query_report": 0,
@@ -121,10 +133,12 @@
     "parent": "Budget & Treasury bills",
     "parentfield": "links",
     "parenttype": "Workspace",
+    "report_ref_doctype": null,
     "type": "Link"
    },
    {
     "dependencies": null,
+    "description": null,
     "hidden": 0,
     "icon": null,
     "is_query_report": 0,
@@ -137,10 +151,12 @@
     "parent": "Budget & Treasury bills",
     "parentfield": "links",
     "parenttype": "Workspace",
+    "report_ref_doctype": null,
     "type": "Link"
    },
    {
     "dependencies": null,
+    "description": null,
     "hidden": 0,
     "icon": null,
     "is_query_report": 0,
@@ -153,10 +169,12 @@
     "parent": "Budget & Treasury bills",
     "parentfield": "links",
     "parenttype": "Workspace",
+    "report_ref_doctype": null,
     "type": "Link"
    },
    {
     "dependencies": null,
+    "description": null,
     "hidden": 0,
     "icon": null,
     "is_query_report": 0,
@@ -169,10 +187,12 @@
     "parent": "Budget & Treasury bills",
     "parentfield": "links",
     "parenttype": "Workspace",
+    "report_ref_doctype": null,
     "type": "Link"
    },
    {
     "dependencies": null,
+    "description": null,
     "hidden": 0,
     "icon": null,
     "is_query_report": 0,
@@ -185,10 +205,12 @@
     "parent": "Budget & Treasury bills",
     "parentfield": "links",
     "parenttype": "Workspace",
+    "report_ref_doctype": null,
     "type": "Link"
    },
    {
     "dependencies": null,
+    "description": null,
     "hidden": 0,
     "icon": null,
     "is_query_report": 0,
@@ -201,10 +223,12 @@
     "parent": "Budget & Treasury bills",
     "parentfield": "links",
     "parenttype": "Workspace",
+    "report_ref_doctype": null,
     "type": "Card Break"
    },
    {
     "dependencies": null,
+    "description": null,
     "hidden": 0,
     "icon": null,
     "is_query_report": 0,
@@ -217,10 +241,12 @@
     "parent": "Budget & Treasury bills",
     "parentfield": "links",
     "parenttype": "Workspace",
+    "report_ref_doctype": null,
     "type": "Link"
    },
    {
     "dependencies": null,
+    "description": null,
     "hidden": 0,
     "icon": null,
     "is_query_report": 0,
@@ -233,10 +259,12 @@
     "parent": "Budget & Treasury bills",
     "parentfield": "links",
     "parenttype": "Workspace",
+    "report_ref_doctype": null,
     "type": "Link"
    },
    {
     "dependencies": null,
+    "description": null,
     "hidden": 0,
     "icon": null,
     "is_query_report": 0,
@@ -249,10 +277,12 @@
     "parent": "Budget & Treasury bills",
     "parentfield": "links",
     "parenttype": "Workspace",
+    "report_ref_doctype": null,
     "type": "Link"
    },
    {
     "dependencies": null,
+    "description": null,
     "hidden": 0,
     "icon": null,
     "is_query_report": 0,
@@ -265,10 +295,12 @@
     "parent": "Budget & Treasury bills",
     "parentfield": "links",
     "parenttype": "Workspace",
+    "report_ref_doctype": null,
     "type": "Link"
    },
    {
     "dependencies": null,
+    "description": null,
     "hidden": 0,
     "icon": null,
     "is_query_report": 0,
@@ -281,10 +313,12 @@
     "parent": "Budget & Treasury bills",
     "parentfield": "links",
     "parenttype": "Workspace",
+    "report_ref_doctype": null,
     "type": "Link"
    },
    {
     "dependencies": null,
+    "description": null,
     "hidden": 0,
     "icon": null,
     "is_query_report": 0,
@@ -297,10 +331,12 @@
     "parent": "Budget & Treasury bills",
     "parentfield": "links",
     "parenttype": "Workspace",
+    "report_ref_doctype": null,
     "type": "Link"
    },
    {
     "dependencies": null,
+    "description": null,
     "hidden": 0,
     "icon": null,
     "is_query_report": 0,
@@ -313,10 +349,11 @@
     "parent": "Budget & Treasury bills",
     "parentfield": "links",
     "parenttype": "Workspace",
+    "report_ref_doctype": null,
     "type": "Link"
    }
   ],
-  "modified": "2025-08-23 10:17:32.745312",
+  "modified": "2025-08-23 11:32:24.195546",
   "module": "budge",
   "name": "Budget & Treasury bills",
   "number_cards": [
