@@ -229,12 +229,6 @@ fixtures = [
         "dt": "DocType Link",
         "filters": [["parent", "in", ["Budget Control", "Budget Request"]]]
     },
-     {
-        "dt": "Custom Field",
-        "filters": [
-            ["module", "=", "budge"]
-        ]
-    },
     {
         "dt": "Workspace",
         "filters": [
@@ -272,34 +266,10 @@ fixtures = [
         ]
     },
     {
-        "doctype": "Custom Field",
-        "filters": [
-            ["dt", "=", "Department"],
-            ["fieldname", "=", "custom_manager"]
-        ]
-    },
-     {
-        "doctype": "Custom Field",
-        "filters": [
-            ["dt", "=", "Treasury bills"]
-        ]
-    },
-     {
-        "doctype": "Custom Field",
-        "filters": [
-            ["dt", "=", "Budget Control"]
-        ]
-    },
-    {
-        "doctype": "Custom Field",
-        "filters": [
-            ["dt", "=", "Budget Request"]
-        ]
-    },
-        {
-        "doctype": "Custom Field",
-        "filters": [
-            ["dt", "=", "Budget "]
-        ]
+    "doctype": "Custom Field",
+    "filters": [
+        ["dt", "in", ["Department","Treasury bills", "Budget Control", "Budget Request", "Budget", "Monthly Distribution", "Budget Account"]]
+    ]
     }
+
 ]
