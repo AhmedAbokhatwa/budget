@@ -268,7 +268,7 @@ fixtures = [
     {
     "doctype": "Custom Field",
     "filters": [
-        ["dt", "in", ["Department","Treasury bills", "Budget Control", "Budget Request", "Budget", "Monthly Distribution", "Budget Account"]]
+        ["dt", "in", ["Monthly Distribution Percentage","Department","Treasury bills", "Budget Control", "Budget Request", "Budget", "Monthly Distribution", "Budget Account"]]
     ]
     }
 
