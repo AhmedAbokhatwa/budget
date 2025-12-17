@@ -1,0 +1,13 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Custom HTML Block",
+  "html": "<div class=\"container\">\n\n  <!-- Under Development -->\n  <div class=\"desc disabled\"\n       onclick=\"frappe.msgprint(__('Still under development'))\">\n    Current Budget\n  </div>\n\n  <!-- Under Development -->\n  <div class=\"desc disabled\"\n       onclick=\"frappe.msgprint(__('Still under development'))\">\n    Budget Items\n  </div>\n\n  <!-- Under Development -->\n  <div class=\"desc disabled\"\n       onclick=\"frappe.msgprint(__('Still under development'))\">\n    Budget vs Actual Comparison (Items)\n  </div>\n\n  <!-- Active -->\n  <div class=\"desc\"\n       onclick=\"frappe.set_route('query-report', 'Budget Variance Report')\">\n    Cost Center Comparison\n  </div>\n\n  <!-- Active -->\n  <div class=\"desc\"\n       onclick=\"frappe.set_route('query-report', 'Purchase Order Trends')\">\n    Purchase Report\n  </div>\n\n</div>\n",
+  "modified": "2025-12-17 20:45:34.514558",
+  "name": "Budget reports",
+  "private": 0,
+  "roles": [],
+  "script": null,
+  "style": ".container {\r\n  text-align: center;\r\n}\r\n\r\n.desc {\r\n  padding: 8px; /* Padding for the content */\r\n  border: 0.1px solid #0653cf; /* Green border */\r\n  color: #0653cf; /* Green text */\r\n  border-radius: 12px; /* Rounded corners */\r\n  display: inline-block;\r\n  cursor: pointer;\r\n  transition: all 0.3s ease;\r\n  margin-bottom: 10px; /* Increased margin between each div */\r\n  margin-right: 10px; /* Additional margin for space between divs */\r\n  font-size: 15px; /* Increased font size */\r\n  /*font-weight: bold;*/\r\n}\r\n\r\n.desc:hover {\r\n  background-color: #0653cf;\r\n  color: white;\r\n}"
+ }
+]

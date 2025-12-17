@@ -1,0 +1,36 @@
+[
+ {
+  "custom": 1,
+  "docstatus": 0,
+  "doctype": "DocType Link",
+  "group": null,
+  "hidden": 0,
+  "is_child_table": 0,
+  "link_doctype": "Budget",
+  "link_fieldname": "custom_budget_request_reference",
+  "modified": "2025-08-25 22:11:13.605650",
+  "name": "6233dc9425",
+  "parent": "Budget Request",
+  "parent_doctype": null,
+  "parentfield": "links",
+  "parenttype": "Customize Form",
+  "table_fieldname": null
+ },
+ {
+  "custom": 0,
+  "docstatus": 0,
+  "doctype": "DocType Link",
+  "group": null,
+  "hidden": 0,
+  "is_child_table": 0,
+  "link_doctype": "Budget Request",
+  "link_fieldname": "budget_control",
+  "modified": "2025-12-17 20:06:45.670688",
+  "name": "r0ohvar2pr",
+  "parent": "Budget Control",
+  "parent_doctype": null,
+  "parentfield": "links",
+  "parenttype": "DocType",
+  "table_fieldname": null
+ }
+]

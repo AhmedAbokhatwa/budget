@@ -1,0 +1,40 @@
+[
+ {
+  "add_total_row": 1,
+  "add_translate_data": 0,
+  "columns": [],
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Report",
+  "filters": [],
+  "is_standard": "No",
+  "javascript": "frappe.query_reports['Treasury Bills Sessions Report - Chart'] ={\n    \"filters\":[\n          {   fieldname:\"posting_date\",\n            label:\"Session Date\",\n            fieldtype:\"Date\",\n            width:\"200px\"\n        \n        },\n    \n        {   fieldname:\"term_type\",\n            label:\"Term Type\",\n            fieldtype:\"Link\",\n            options:\"Term Type\",\n            width:\"200px\"\n        \n        }\n    ,\n    \n        {   fieldname:\"duration\",\n            label:\"Durartion\",\n            fieldtype:\"Data\",\n            width:\"200px\"\n        \n        }\n    \n    ]\n\n\n}\n\n\nfrappe.query_report._get_filters_html_for_print = frappe.query_report.get_filters_html_for_print;\nfrappe.query_report.get_filters_html_for_print = print_settings => {\n  const me = frappe.query_report,\n        encode = svg => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent((new XMLSerializer()).serializeToString(svg));\n  let applied_filters = me._get_filters_html_for_print();\n\n  // Check if the report name matches\n  if (me.report_name === \"Treasury Bills Sessions Report - Chart\") {\n    // Add your onload functionality here\n    // For example:\n    console.log(\"Special onload functionality for تقرتقرير جلسات اذون الخزانه شارتف\");\n  }\n\n  if (me.chart && me.chart.svg) {\n     applied_filters += `<hr><img alt=\"${__('Chart')}\" src=\"${encode(me.chart.svg)}\" />`;\n  }\n\n  return applied_filters;\n};\n\n",
+  "json": null,
+  "letter_head": "header",
+  "modified": "2025-08-23 02:33:46.924619",
+  "module": "budge",
+  "name": "Treasury Bills Sessions Report - Chart",
+  "prepared_report": 0,
+  "query": "",
+  "ref_doctype": "Treasury bills",
+  "reference_report": null,
+  "report_name": "Treasury Bills Sessions Report - Chart",
+  "report_script": "columns = [\n    {\n        \"fieldname\": \"name\",\n        \"label\": _(\"Name\"),\n        \"fieldtype\": \"Link\",\n        \"options\": \"Treasury bills\",\n        \"width\": 150\n    },\n    {\n        \"fieldname\": \"posting_date\",\n        \"label\": _(\"Posting Date\"),\n        \"fieldtype\": \"Date\",\n        \"width\": 150\n    },\n    {\n        \"fieldname\": \"term_type\",\n        \"label\": _(\"Term Type\"),\n        \"fieldtype\": \"Data\",\n        \"width\": 150\n    },\n    {\n        \"fieldname\": \"duration\",\n        \"label\": _(\"Duration\"),\n        \"fieldtype\": \"Int\",\n        \"width\": 150\n    },\n    {\n        \"fieldname\": \"bidding_status\",\n        \"label\": _(\"Bidding Status\"),\n        \"fieldtype\": \"Data\",\n        \"width\": 150\n    },\n    {\n        \"fieldname\": \"custom_required_amount\",\n        \"label\": _(\"Required Amount\"),\n        \"fieldtype\": \"Currency\",\n        \"width\": 150\n    },\n    {\n        \"fieldname\": \"custom_amounts_shown\",\n        \"label\": _(\"Amounts Shown\"),\n        \"fieldtype\": \"Currency\",\n        \"width\": 150\n    },\n    {\n        \"fieldname\": \"custom_amounts_executed\",\n        \"label\": _(\"Amounts Executed\"),\n        \"fieldtype\": \"Currency\",\n        \"width\": 150\n    },\n    {\n        \"fieldname\": \"announced_higher\",\n        \"label\": _(\"Announced Higher\"),\n        \"fieldtype\": \"Currency\",\n        \"width\": 150\n    },\n    {\n        \"fieldname\": \"announced_less\",\n        \"label\": _(\"Announced Less\"),\n        \"fieldtype\": \"Currency\",\n        \"width\": 150\n    },\n    {\n        \"fieldname\": \"announced_average\",\n        \"label\": _(\"Announced Average\"),\n        \"fieldtype\": \"Currency\",\n        \"width\": 150\n    },\n    {\n        \"fieldname\": \"executed_higher\",\n        \"label\": _(\"Executed Higher\"),\n        \"fieldtype\": \"Currency\",\n        \"width\": 150\n    },\n    {\n        \"fieldname\": \"executed_less\",\n        \"label\": _(\"Executed Less\"),\n        \"fieldtype\": \"Currency\",\n        \"width\": 150\n    },\n    {\n        \"fieldname\": \"executed_average\",\n        \"label\": _(\"Executed Average\"),\n        \"fieldtype\": \"Currency\",\n        \"width\": 150\n    }\n]\n\n# Get values from filters or set them to None\nposting_date = filters.get(\"posting_date\")\nterm_type = filters.get(\"term_type\")\nduration = filters.get(\"duration\")\n\nconditions = []\nif posting_date:\n    conditions.append(\"`tabTreasury bills`.`posting_date` LIKE %(posting_date)s\")\nif term_type:\n    conditions.append(\"`tabTreasury bills`.`term_type` LIKE  %(term_type)s\")\nif duration:\n    conditions.append(\"`tabTreasury bills`.`duration` LIKE %(duration)s\")\n\nconditions_str = \" AND \".join(conditions) if conditions else \"\"\n\nsql = f\"\"\"SELECT\n            `tabTreasury bills`.`name` AS `name`,\n            `tabTreasury bills`.`posting_date`,\n            `tabTreasury bills`.`term_type`,\n            `tabTreasury bills`.`duration`,\n            `tabTreasury bills`.`bidding_status`,\n            `tabTreasury bills`.`custom_required_amount`,\n            `tabTreasury bills`.`custom_amounts_shown`,\n            `tabTreasury bills`.`custom_amounts_executed`,\n            `tabAnnounced prices`.`higher` AS `announced_higher`,\n            `tabAnnounced prices`.`less` AS `announced_less`,\n            `tabAnnounced prices`.`average` AS `announced_average`,\n            `tabExecuted prices`.`higher` AS `executed_higher`,\n            `tabExecuted prices`.`less` AS `executed_less`,\n            `tabExecuted prices`.`average` AS `executed_average`\n        FROM\n            `tabTreasury bills`\n        LEFT JOIN\n            `tabAnnounced prices` ON `tabTreasury bills`.`name` = `tabAnnounced prices`.`parent`\n        LEFT JOIN\n            `tabExecuted prices` ON `tabTreasury bills`.`name` = `tabExecuted prices`.`parent`\n        WHERE\n            `tabTreasury bills`.`treasury_bills` = 'Session data' \n            {'AND ' + conditions_str if conditions_str else ''}\n\"\"\"\n\nmydata = frappe.db.sql(sql, {\n    \"posting_date\": f\"%{posting_date}%\" if posting_date else None,\n    \"term_type\": f\"%{term_type}%\" if term_type else None,\n    \"duration\": f\"%{duration}%\" if duration else None\n}, as_dict=True)\n\nchart = {\n    'data': {\n        'labels': [data['posting_date'] for data in mydata],\n        'datasets': [\n            {'name': 'announced_less', 'values': [data['announced_less'] for data in mydata], 'chartType': 'line'},\n            {'name': 'announced_average', 'values': [data['announced_average'] for data in mydata], 'chartType': 'line'},\n            {'name': 'announced_higher', 'values': [data['announced_higher'] for data in mydata], 'chartType': 'line'}\n        ]\n    },\n    'type': 'line'\n}\n\ndata = columns, mydata, None , chart\n\n\n",
+  "report_type": "Script Report",
+  "roles": [
+   {
+    "parent": "Treasury Bills Sessions Report - Chart",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "System Manager"
+   },
+   {
+    "parent": "Treasury Bills Sessions Report - Chart",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "Accounts Manager"
+   }
+  ],
+  "timeout": 0
+ }
+]
