@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "format:BR-{department}-{fiscal_year}-{#####}",
- "creation": "2025-09-11 03:34:13.650541",
+ "creation": "2026-06-10 09:26:55.957866",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -25,8 +25,8 @@
   "column_break_8huhb",
   "total_quantity",
   "total",
-  "amended_from",
-  "budget_created"
+  "budget_created",
+  "amended_from"
  ],
  "fields": [
   {
@@ -124,8 +124,11 @@
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
+   "no_copy": 1,
    "options": "Budget Request",
-   "read_only": 1
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "allow_on_submit": 1,
@@ -142,11 +145,11 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-11 03:43:19.963648",
+ "modified": "2026-06-10 09:34:59.872512",
  "modified_by": "Administrator",
  "module": "budge",
  "name": "Budget Request",
- "naming_rule": "Expression",
+ "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
   {

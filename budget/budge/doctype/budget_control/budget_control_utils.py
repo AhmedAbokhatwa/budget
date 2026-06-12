@@ -125,7 +125,7 @@ class BudgetControlUtils:
 # ===================================
 # budget_control_reports.py - تقارير إضافية
 # ===================================
-
+from budget.budge.doctype.budget_control.budget_control import get_monthly_distribution_department
 @frappe.whitelist()
 def get_budget_variance_report(cost_center, from_date=None, to_date=None):
     """Generate budget vs actual variance report"""

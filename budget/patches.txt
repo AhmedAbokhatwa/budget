@@ -2,3 +2,4 @@ budget.patches.v15_0.setup_config
 budget.patches.v15_0.add_budget_field
 budget.patches.v15_0.add_budget_request_link
 budget.patches.v15_0.add_custom_budget_request_refrance
+budget.patches.v15_0.fix_budget_report_module

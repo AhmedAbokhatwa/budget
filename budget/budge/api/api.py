@@ -11,8 +11,7 @@ def get_items_per_department(department):
         item_department.parent == item.name).join(item_default).on(
             item.name == item_default.parent).select(
                 item.name, item_default.expense_account).where(
-                    item_department.department == department).where(
-                        item.custom_is_budget == 1).distinct().run(
+                    item_department.department == department).distinct().run(   #.where(item.custom_is_budget == 1) remove this
                             as_dict=True)
 
     return items

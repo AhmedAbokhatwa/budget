@@ -7,6 +7,38 @@
   "docstatus": 0,
   "doctype": "Report",
   "filters": [],
+  "is_standard": "Yes",
+  "javascript": null,
+  "json": null,
+  "letter_head": null,
+  "modified": "2026-06-10 14:17:59.026785",
+  "module": "budge",
+  "name": "Budget Report",
+  "prepared_report": 0,
+  "query": null,
+  "ref_doctype": "Budget",
+  "reference_report": null,
+  "report_name": "Budget Report",
+  "report_script": null,
+  "report_type": "Script Report",
+  "roles": [
+   {
+    "parent": "Budget Report",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "Accounts Manager"
+   }
+  ],
+  "timeout": 0
+ },
+ {
+  "add_total_row": 1,
+  "add_translate_data": 0,
+  "columns": [],
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Report",
+  "filters": [],
   "is_standard": "No",
   "javascript": "frappe.query_reports['Treasury Bills Sessions Report - Chart'] ={\n    \"filters\":[\n          {   \n            fieldname:\"treasury_bills_type\",\n            label:\"Treasury Bills Type\",\n            fieldtype: \"Select\",\n            options: \"\\nSession data\\nNew tender\",\n            width:\"200px\"\n        \n        },\n          {   fieldname:\"posting_date\",\n            label:\"Session Date\",\n            fieldtype:\"Date\",\n            width:\"200px\"\n        \n        },\n    \n        {   fieldname:\"term_type\",\n            label:\"Term Type\",\n            fieldtype:\"Link\",\n            options:\"Term Type\",\n            width:\"200px\"\n        \n        }\n    ,\n    \n        {   fieldname:\"duration\",\n            label:\"Durartion\",\n            fieldtype:\"Data\",\n            width:\"200px\"\n        \n        }\n    \n    ]\n\n\n}\n\n// حفظ النسخة الأصلية\nfrappe.query_report._get_filters_html_for_print =\n  frappe.query_report.get_filters_html_for_print;\n\n// Override\nfrappe.query_report.get_filters_html_for_print = function (print_settings) {\n  const me = frappe.query_report;\n  const encode = svg =>\n    'data:image/svg+xml;charset=utf-8,' +\n    encodeURIComponent(new XMLSerializer().serializeToString(svg));\n\n  // استدعاء الدالة الأصلية\n  let applied_filters = me._get_filters_html_for_print(print_settings);\n\n  // شرط على اسم التقرير\n  if (me.report_name === \"Treasury Bills Sessions Report - Chart\") {\n    console.log(\n      \"Special print logic for Treasury Bills Sessions Report - Chart\"\n    );\n    // تقدر تضيف HTML أو Logic هنا\n  }\n\n  // إضافة الشارت في الـ Print\n  if (me.chart && me.chart.svg) {\n    applied_filters += `\n      <hr>\n      <img alt=\"${__('Chart')}\" src=\"${encode(me.chart.svg)}\" />\n    `;\n  }\n\n  return applied_filters;\n};\n",
   "json": null,

@@ -8,8 +8,14 @@ from frappe.utils import flt, nowdate, getdate, add_months, cstr
 import json
 
 class BudgetControl(Document):
+    def before_save(self):
+        """Skip core mandatory validation for Project mode"""
+        if self.custom_budget_against == 'Project':
+            self.flags.ignore_mandatory = True
     def before_submit(self):
         """Validation before submitting the document"""
+        if self.custom_budget_against == 'Project':
+            self.flags.ignore_mandatory = True
         self.validate_fiscal_year()
         self.validate_required_fields()
         self.delete_draft_budget_control()
@@ -25,9 +31,14 @@ class BudgetControl(Document):
     def validate_required_fields(self):
         """Validate that all required fields are filled"""
         required_fields = [
-            'budget_controller', 'department', 'cost_center',
+            'budget_controller', 'department',
             'fiscal_year', 'budget_name', 'status'
         ]
+
+        if self.custom_budget_against == 'Cost Center':
+            required_fields.append('cost_center')
+        elif self.custom_budget_against == 'Project':
+            required_fields.append('custom_project')
 
         missing_fields = []
         for field in required_fields:
@@ -61,6 +72,8 @@ class BudgetControl(Document):
 
     def delete_draft_budget_control(self):
         """Handle duplicate budget controls for the same cost center"""
+        if not self.cost_center:
+            return  # No cost center specified, skip duplicate check
         duplicates = frappe.get_list(
             'Budget Control',
             filters={
@@ -79,6 +92,8 @@ class BudgetControl(Document):
         '''
             Prevent Create Another Sumitted B Control
         '''
+        if not self.cost_center:
+            return
         duplicates = frappe.get_list(
             'Budget Control',
             filters={
@@ -190,12 +205,18 @@ class BudgetControl(Document):
             'doctype': 'Budget Request',
             'department': self.department,
             'fiscal_year': self.fiscal_year,
-            'cost_center': self.cost_center,
             'budget_control': self.name,
             'budget_controller': self.budget_controller,
+            'custom_budget_against': self.custom_budget_against,
             'posting_date': nowdate(),
             'status': 'Requested'
         }
+
+        if self.custom_budget_against == 'Cost Center':
+            doc_dict['cost_center'] = self.cost_center
+        elif self.custom_budget_against == 'Project':
+            doc_dict['custom_project'] = self.custom_project
+
         print('DICT',doc_dict)
         try:
             budget_request = frappe.get_doc(doc_dict)
@@ -227,12 +248,17 @@ class BudgetControl(Document):
             'doctype': 'Budget Request',
             'department': self.department,
             'fiscal_year': self.fiscal_year,
-            'cost_center': self.cost_center,
             'budget_control': self.name,
             'budget_controller': self.budget_controller,
+            'custom_budget_against': self.custom_budget_against,
             'request_date': nowdate(),
             'status': 'Requested'
         }
+
+        if self.custom_budget_against == 'Cost Center':
+            doc_dict['cost_center'] = self.cost_center
+        elif self.custom_budget_against == 'Project':
+            doc_dict['custom_project'] = self.custom_project
 
         try:
             budget_request = frappe.get_doc(doc_dict)
@@ -258,12 +284,17 @@ class BudgetControl(Document):
             'doctype': 'Budget Request',
             'department': self.department,
             'fiscal_year': self.fiscal_year,
-            'cost_center': self.cost_center,
             'budget_control': self.name,
             'budget_controller': self.budget_controller,
+            'custom_budget_against': self.custom_budget_against,
             'request_date': nowdate(),
             'status': 'Requested'
         }
+
+        if self.custom_budget_against == 'Cost Center':
+            doc_dict['cost_center'] = self.cost_center
+        elif self.custom_budget_against == 'Project':
+            doc_dict['custom_project'] = self.custom_project
 
         try:
             budget_request = frappe.get_doc(doc_dict)
@@ -389,22 +420,31 @@ class BudgetControl(Document):
         )
 
 @frappe.whitelist()
-def get_monthly_distribution_department(cost_center, fiscal_year, department, budget):
+def get_monthly_distribution_department(cost_center=None, fiscal_year=None, department=None, budget=None, project=None):
     allocations = []
-    # هات كل الـ Monthly Distributions الخاصة بالـ Cost Center
+
+    # هات كل الـ Monthly Distributions الخاصة بالـ Cost Center او Project
+    md_filters = {
+        "fiscal_year": fiscal_year,
+        "custom_department": department,
+    }
+
+    if budget:
+        md_filters["custom_budget"] = budget
+    if project:
+        md_filters["custom_project"] = project
+    else:
+        md_filters["custom_cost_center"] = cost_center
+
     monthly_distributions = frappe.get_all(
         "Monthly Distribution",
-        filters={
-            "custom_cost_center": cost_center,
-            "fiscal_year":fiscal_year,
-            "custom_department":department,
-            "custom_budget":budget
-             },
+        filters=md_filters,
         fields=[
             "name",
             "custom_expense_account",
             "custom_budget",
             "custom_cost_center",
+            "custom_project",
             "custom_item_code",
         ],
     )
@@ -425,6 +465,7 @@ def get_monthly_distribution_department(cost_center, fiscal_year, department, bu
                 item_code=md.custom_item_code,
                 account=md.custom_expense_account,
                 cost_center=md.custom_cost_center,
+                project=md.custom_project,
                 month=alloc.month,
             )
 
@@ -433,6 +474,7 @@ def get_monthly_distribution_department(cost_center, fiscal_year, department, bu
                     "item_code": md.custom_item_code,
                     "account": md.custom_expense_account,
                     "cost_center": md.custom_cost_center,
+                    "project": md.custom_project,
                     "month": alloc.month,
                     "monthly_allocation": alloc.percentage_allocation,
                     "requested": requested,
@@ -445,10 +487,10 @@ def get_monthly_distribution_department(cost_center, fiscal_year, department, bu
     return allocations
 
 
-def get_consumed_amount(item_code, account, cost_center, month):
+def get_consumed_amount(item_code, account, cost_center=None, project=None, month=None):
     """
-    احسب المصروف من Purchase Invoice
-    على حسب الـ item_code + account + cost_center + الشهر
+    احسب المصروف من Purchase Invoice / Purchase Order
+    على حسب الـ item_code + account + (cost_center او project) + الشهر
     """
     import calendar
     from datetime import datetime
@@ -482,27 +524,39 @@ def get_consumed_amount(item_code, account, cost_center, month):
 
     consumed_amount = 0
 
+    # حدد هل الفلترة على أساس Project ولا Cost Center
+    if project:
+        ref_condition_pii = "pii.project = %(ref_value)s"
+        ref_condition_poi = "poi.project = %(ref_value)s"
+        ref_value = project
+    else:
+        ref_condition_pii = "pii.cost_center = %(ref_value)s"
+        ref_condition_poi = "poi.cost_center = %(ref_value)s"
+        ref_value = cost_center
+
+    base_values = {
+        "item_code": item_code,
+        "account": account,
+        "ref_value": ref_value,
+        "start_date": first_day,
+        "end_date": last_day,
+    }
+
     # البحث في Purchase Invoice Items
     try:
         purchase_invoice_items = frappe.db.sql(
-            """
+            f"""
             SELECT SUM(pii.amount) as total_amount
             FROM `tabPurchase Invoice Item` pii
             INNER JOIN `tabPurchase Invoice` pi ON pii.parent = pi.name
             WHERE pii.item_code = %(item_code)s
             AND pii.expense_account = %(account)s
-            AND pii.cost_center = %(cost_center)s
+            AND {ref_condition_pii}
             AND pi.posting_date >= %(start_date)s
             AND pi.posting_date <= %(end_date)s
             AND pi.docstatus = 1
         """,
-            {
-                "item_code": item_code,
-                "account": account,
-                "cost_center": cost_center,
-                "start_date": first_day,
-                "end_date": last_day,
-            },
+            base_values,
             as_dict=True,
         )
 
@@ -515,25 +569,19 @@ def get_consumed_amount(item_code, account, cost_center, month):
     # البحث في Purchase Order Items (إختياري - إذا كنت تريد تضمين PO)
     try:
         purchase_order_items = frappe.db.sql(
-            """
+            f"""
             SELECT SUM(poi.amount) as total_amount
             FROM `tabPurchase Order Item` poi
             INNER JOIN `tabPurchase Order` po ON poi.parent = po.name
             WHERE poi.item_code = %(item_code)s
             AND poi.expense_account = %(account)s
-            AND poi.cost_center = %(cost_center)s
+            AND {ref_condition_poi}
             AND po.transaction_date >= %(start_date)s
             AND po.transaction_date <= %(end_date)s
             AND po.docstatus = 1
             AND po.status NOT IN ('Cancelled', 'Closed')
         """,
-            {
-                "item_code": item_code,
-                "account": account,
-                "cost_center": cost_center,
-                "start_date": first_day,
-                "end_date": last_day,
-            },
+            base_values,
             as_dict=True,
         )
 
@@ -542,26 +590,20 @@ def get_consumed_amount(item_code, account, cost_center, month):
         if purchase_order_items and purchase_order_items[0].total_amount:
             # تحقق من عدم وجود Purchase Invoice مرتبط
             pending_po_amount = frappe.db.sql(
-                """
+                f"""
                 SELECT SUM(poi.amount - IFNULL(poi.received_qty * poi.rate, 0)) as pending_amount
                 FROM `tabPurchase Order Item` poi
                 INNER JOIN `tabPurchase Order` po ON poi.parent = po.name
                 WHERE poi.item_code = %(item_code)s
                 AND poi.expense_account = %(account)s
-                AND poi.cost_center = %(cost_center)s
+                AND {ref_condition_poi}
                 AND po.transaction_date >= %(start_date)s
                 AND po.transaction_date <= %(end_date)s
                 AND po.docstatus = 1
                 AND po.status NOT IN ('Cancelled', 'Closed')
                 AND poi.received_qty < poi.qty
             """,
-                {
-                    "item_code": item_code,
-                    "account": account,
-                    "cost_center": cost_center,
-                    "start_date": first_day,
-                    "end_date": last_day,
-                },
+                base_values,
                 as_dict=True,
             )
 
@@ -576,11 +618,11 @@ def get_consumed_amount(item_code, account, cost_center, month):
 
 # دالة مساعدة لإرجاع تقرير مفصل (إختياري)
 @frappe.whitelist()
-def get_monthly_distribution_report(cost_center, fiscal_year, department, month=None):
+def get_monthly_distribution_report(cost_center=None, fiscal_year=None, department=None, month=None, project=None):
     """
     إرجاع تقرير مفصل للتوزيع الشهري
     """
-    data = get_monthly_distribution_department(cost_center, fiscal_year, department)
+    data = get_monthly_distribution_department(cost_center, fiscal_year, department, project=project)
 
     if month:
         # فلترة البيانات حسب الشهر المحدد
@@ -593,7 +635,7 @@ def get_monthly_distribution_report(cost_center, fiscal_year, department, month=
         "total_remaining": sum(d["remaining"] for d in data),
     }
 
-    return {"data": data, "totals": totals, "cost_center": cost_center, "month": month}
+    return {"data": data, "totals": totals, "cost_center": cost_center, "project": project, "month": month}
 
 
 # budget.budge.doctype.budget_control.budget_control.py

@@ -2,8 +2,12 @@
 // For license information, please see license.txt
 frappe.ui.form.on('Budget Control', {
     refresh(frm) {
+        frm.set_df_property('cost_center', 'reqd', 0);
+
+        frm.trigger('toggle_fields_by_budget_against');
                 // Add Report Button
-        if (frm.doc.cost_center && frm.doc.department){
+        // ✅ CHANGE 1: cost_center OR custom_project check
+        if ((frm.doc.cost_center || frm.doc.custom_project) && frm.doc.department){
             frm.add_custom_button(__(`<span style="color:Green;">Generate Report<span>`), function() {
                 show_report_dialog(frm);
             }, __('Budget Tools'));
@@ -465,13 +469,15 @@ frappe.ui.form.on('Budget Control', {
 
             // ==============================================================================
             // Call the server method
+            // ✅ CHANGE 2: project argument ઉમેર્યો
             frappe.call({
                 method: "budget.budge.doctype.budget_control.budget_control.get_monthly_distribution_department",
                 args: {
                     cost_center: frm.doc.cost_center,
                     fiscal_year: frm.doc.fiscal_year,
                     department: frm.doc.department,
-                    budget: frm.doc.budget
+                    budget: frm.doc.budget,
+                    project: frm.doc.custom_project
                 },
                 callback: function(r) {
                         console.log('Budget Data:', r.message);
@@ -505,6 +511,11 @@ function render_modern_budget_dashboard(frm, items) {
     const uniqueAccounts = [...new Set(items.map(i => i.account).filter(Boolean))];
     const uniqueMonths = [...new Set(items.map(i => i.month).filter(Boolean))];
 
+    // ✅ CHANGE 3: Subtitle માં Cost Center અથવા Project બતાવો
+    const isProject = frm.doc.custom_budget_against === 'Project';
+    const subtitleLabel = isProject ? '🗂️ Project' : '🏛️ Cost Center';
+    const subtitleValue = isProject ? (frm.doc.custom_project || 'N/A') : (frm.doc.cost_center || 'N/A');
+
     // Create main dashboard HTML
     let html = `
         <div class="budget-dashboard">
@@ -512,7 +523,7 @@ function render_modern_budget_dashboard(frm, items) {
                 <h1 class="budget-title">💰 Budget Control Center</h1>
                 <p class="budget-subtitle">
                     <strong>${frm.doc.department || "Department"}</strong> •
-                    <strong>${frm.doc.cost_center || "N/A"}</strong>
+                    ${subtitleLabel}: <strong>${subtitleValue}</strong>
                 </p>
             </div>
 
@@ -914,14 +925,19 @@ function render_no_data_state(frm) {
     const container = frm.fields_dict.budget_html.$wrapper;
     container.empty();
 
+    // ✅ CHANGE 4: No data message માં Project/Cost Center બંને handle
+    const isProject = frm.doc.custom_budget_against === 'Project';
+    const refLabel = isProject ? 'project' : 'cost center';
+    const refValue = isProject ? (frm.doc.custom_project || 'N/A') : (frm.doc.cost_center || 'N/A');
+
     container.html(`
         <div class="budget-dashboard">
             <div class="no-data">
                 <div class="no-data-icon">📊</div>
                 <div class="no-data-text">No budget data found</div>
                 <p style="opacity: 0.7; margin-top: 20px;">
-                    No budget data found for cost center: <strong>${frm.doc.cost_center || 'N/A'}</strong><br>
-                    Please check if the cost center has monthly distributions configured.
+                    No budget data found for ${refLabel}: <strong>${refValue}</strong><br>
+                    Please check if the ${refLabel} has monthly distributions configured.
                 </p>
                 <button class="btn btn-primary btn-sm" onclick="location.reload()">
                     Refresh / تحديث
@@ -1004,6 +1020,13 @@ frappe.ui.form.on('Budget Control', {
         }
     },
 
+    // ✅ CHANGE 5: custom_project change થાય ત્યારે auto-refresh
+    custom_project: function(frm) {
+        if (frm.doc.custom_project) {
+            frm.trigger('refresh');
+        }
+    },
+
     department: function(frm) {
         // Auto-refresh when department changes
         if (frm.doc.department) {
@@ -1044,13 +1067,15 @@ function load_dashboard_data(frm) {
     `);
 
     // Call the server method
+    // ✅ CHANGE 6: project argument ઉમેર્યો
     frappe.call({
         method: "budget.budge.doctype.budget_control.budget_control.get_monthly_distribution_department",
         args: {
             cost_center: frm.doc.cost_center,
             fiscal_year: frm.doc.fiscal_year,
             department: frm.doc.department,
-            budget: frm.doc.budget
+            budget: frm.doc.budget,
+            project: frm.doc.custom_project
         },
         callback: function(r) {
             if (r.message && r.message.length > 0) {
@@ -1071,6 +1096,8 @@ function show_report_dialog(frm) {
         'January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'
     ];
+
+    const isProject = frm.doc.custom_budget_against === 'Project';
 
     let dialog = new frappe.ui.Dialog({
         title: '📊 Generate Budget Report',
@@ -1094,14 +1121,27 @@ function show_report_dialog(frm) {
                 reqd: 1,
                 description: 'Choice Fiscal Year'
             },
+            // ✅ CHANGE 7: Cost Center field — Project mode માં hidden
             {
                 label: 'Cost Center',
                 fieldname: 'cost_center',
                 fieldtype: 'Link',
                 options:'Cost Center',
                 default: frm.doc.cost_center,
-                reqd: 1,
+                reqd: !isProject,
+                hidden: isProject,
                 description: 'Enter the cost center to generate report for'
+            },
+            // ✅ CHANGE 8: Project field ઉમેર્યો — Cost Center mode માં hidden
+            {
+                label: 'Project',
+                fieldname: 'project',
+                fieldtype: 'Link',
+                options: 'Project',
+                default: frm.doc.custom_project,
+                reqd: isProject,
+                hidden: !isProject,
+                description: 'Select project to generate report for'
             },
             {
                 label: 'Month Filter',
@@ -1139,10 +1179,12 @@ function generate_budget_report(frm, filters) {
         indicator: 'blue'
     }, 3);
 
+    // ✅ CHANGE 9: project argument ઉમેર્યો
     const args = {
         cost_center: filters.cost_center,
         fiscal_year: filters.fiscal_year,
         department: filters.department,
+        project: filters.project
     };
 
     // Add month filter if not "All Months"
@@ -1185,8 +1227,13 @@ function show_report_modal(report_data, filters) {
 
     let report_html = generate_report_html(data, totals, filters);
 
+    // ✅ CHANGE 10: Report title માં Project/Cost Center બંને handle
+    const reportTitle = filters.project
+        ? `📊 Budget Report - ${filters.project}`
+        : `📊 Budget Report - ${filters.cost_center}`;
+
     let report_dialog = new frappe.ui.Dialog({
-        title: `📊 Budget Report - ${filters.cost_center}`,
+        title: reportTitle,
         size: 'extra-large',
         fields: [
             {
@@ -1211,6 +1258,11 @@ function show_report_modal(report_data, filters) {
 function generate_report_html(data, totals, filters) {
     const reportDate = frappe.datetime.now_datetime();
 
+    // ✅ CHANGE 11: Report header માં Project/Cost Center બંને handle
+    const refDisplay = filters.project
+        ? `<strong>Project:</strong> ${filters.project}`
+        : `<strong>Cost Center:</strong> ${filters.cost_center}`;
+
     let html = `
         <div class="report-container" style="
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
@@ -1225,7 +1277,7 @@ function generate_report_html(data, totals, filters) {
                     📊 Monthly Budget Distribution Report
                 </h1>
                 <p style="color: #64748b; margin: 10px 0; font-size: 1.1rem;">
-                    <strong>Cost Center:</strong> ${filters.cost_center} |
+                    ${refDisplay} |
                     <strong>Period:</strong> ${filters.month || 'All Months'} |
                     <strong>Generated:</strong> ${frappe.datetime.str_to_user(reportDate)}
                 </p>
@@ -1380,12 +1432,15 @@ function export_to_excel(report_data, filters) {
     // Add totals row
     csv_content += `\nTOTALS,,,${totals.total_requested},${totals.total_consumed},${totals.total_remaining},${((totals.total_consumed / totals.total_requested) * 100).toFixed(1)}%,\n`;
 
+    // ✅ CHANGE 12: Excel filename માં Project/Cost Center બંને handle
+    const refName = (filters.project || filters.cost_center || 'Budget').replace(/[^a-z0-9]/gi, '_');
+
     // Create and download file
     const blob = new Blob([csv_content], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Budget_Report_${filters.cost_center.replace(/[^a-z0-9]/gi, '_')}_${filters.month || 'All_Months'}_${frappe.datetime.now_date()}.csv`;
+    a.download = `Budget_Report_${refName}_${filters.month || 'All_Months'}_${frappe.datetime.now_date()}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -1398,13 +1453,16 @@ function export_to_excel(report_data, filters) {
 }
 
 function download_report_pdf(html_content, filters) {
+    // ✅ CHANGE 13: PDF title માં Project/Cost Center બંને handle
+    const refName = filters.project || filters.cost_center;
+
     // Create a new window for printing
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Budget Report - ${filters.cost_center}</title>
+            <title>Budget Report - ${refName}</title>
             <style>
                 @media print {
                     body { margin: 0; padding: 20px; }
@@ -1449,3 +1507,26 @@ function delete_budget_monthly_distribution (frm){
 
 
 }
+// Budget Against change thay tyare fields toggle thay
+frappe.ui.form.on('Budget Control', {
+    toggle_fields_by_budget_against(frm) {
+        const against = frm.doc.custom_budget_against;
+
+        if (against === 'Cost Center') {
+            frm.set_df_property('cost_center', 'hidden', 0);
+            frm.set_df_property('cost_center', 'reqd', 1);
+        } else if (against === 'Project') {
+            frm.set_df_property('cost_center', 'hidden', 1);
+            frm.set_df_property('cost_center', 'reqd', 0);
+            frm.set_value('cost_center', '');
+        } else {
+            frm.set_df_property('cost_center', 'hidden', 0);
+            frm.set_df_property('cost_center', 'reqd', 0);
+        }
+        frm.refresh_field('cost_center');
+    },
+
+    custom_budget_against(frm) {
+        frm.trigger('toggle_fields_by_budget_against');
+    }
+});

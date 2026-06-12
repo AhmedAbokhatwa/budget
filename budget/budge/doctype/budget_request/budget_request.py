@@ -18,8 +18,11 @@ class BudgetRequest(Document):
         check_and_create_budget(self.name)
 
     def validate_cost_center(self):
-        if not self.cost_center:
+        # ✅ CHANGED: conditional based on custom_budget_against
+        if self.custom_budget_against == 'Cost Center' and not self.cost_center:
             frappe.throw("Please select a Cost Center before submitting the form.")
+        elif self.custom_budget_against == 'Project' and not self.custom_project:
+            frappe.throw("Please select a Project before submitting the form.")
 
     def validate_budget_items(self):
         if not self.budget_items_details or len(self.budget_items_details) == 0:
@@ -62,30 +65,59 @@ class BudgetRequest(Document):
 
     def validate_duplicate_items(self):
         for row in self.budget_items_details:
-            duplicates = frappe.db.sql("""
-                SELECT
-                    br.name AS budget_request_name,
-                    br.docstatus AS budget_request_status,
-                    br.fiscal_year,
-                    br.cost_center,
-                    bid.item_code,
-                    bid.expense_account
-                FROM `tabBudget Request` br
-                LEFT JOIN `tabBudget Items Details` bid
-                    ON br.name = bid.parent
-                WHERE br.fiscal_year = %s
-                  AND br.cost_center = %s
-                  AND bid.item_code = %s
-                  AND bid.expense_account = %s
-                  AND br.name != %s
-                  AND br.docstatus < 2
-            """, (
-                self.fiscal_year,
-                self.cost_center,
-                row.item_code,
-                row.expense_account,
-                self.name
-            ), as_dict=True)
+            # ✅ CHANGED: conditional based on custom_budget_against
+            if self.custom_budget_against == 'Cost Center':
+                duplicates = frappe.db.sql("""
+                    SELECT
+                        br.name AS budget_request_name,
+                        br.docstatus AS budget_request_status,
+                        br.fiscal_year,
+                        br.cost_center,
+                        bid.item_code,
+                        bid.expense_account
+                    FROM `tabBudget Request` br
+                    LEFT JOIN `tabBudget Items Details` bid
+                        ON br.name = bid.parent
+                    WHERE br.fiscal_year = %s
+                      AND br.cost_center = %s
+                      AND bid.item_code = %s
+                      AND bid.expense_account = %s
+                      AND br.name != %s
+                      AND br.docstatus < 2
+                """, (
+                    self.fiscal_year,
+                    self.cost_center,
+                    row.item_code,
+                    row.expense_account,
+                    self.name
+                ), as_dict=True)
+            elif self.custom_budget_against == 'Project':
+                duplicates = frappe.db.sql("""
+                    SELECT
+                        br.name AS budget_request_name,
+                        br.docstatus AS budget_request_status,
+                        br.fiscal_year,
+                        br.custom_project,
+                        bid.item_code,
+                        bid.expense_account
+                    FROM `tabBudget Request` br
+                    LEFT JOIN `tabBudget Items Details` bid
+                        ON br.name = bid.parent
+                    WHERE br.fiscal_year = %s
+                      AND br.custom_project = %s
+                      AND bid.item_code = %s
+                      AND bid.expense_account = %s
+                      AND br.name != %s
+                      AND br.docstatus < 2
+                """, (
+                    self.fiscal_year,
+                    self.custom_project,
+                    row.item_code,
+                    row.expense_account,
+                    self.name
+                ), as_dict=True)
+            else:
+                duplicates = []
 
             if duplicates:
 
@@ -265,15 +297,22 @@ def create_monthly_distribution_server(budget_request, item):
     monthly_dist.distribution_id = f"{budget_request.name}-{item.expense_account}"
     monthly_dist.fiscal_year = budget_request.fiscal_year
     monthly_dist.custom_expense_account = item.expense_account
-    monthly_dist.custom_cost_center = budget_request.cost_center
-    # monthly_dist.custom_budget =1
     monthly_dist.custom_budget_control = budget_request.budget_control
     monthly_dist.custom_item_code = item.item_code
     monthly_dist.custom_department = budget_request.department
+
+    monthly_dist.custom_budget_against = budget_request.custom_budget_against
+    
+    # ✅ CHANGED: conditional based on custom_budget_against
+    if budget_request.custom_budget_against == 'Cost Center':
+        monthly_dist.custom_cost_center = budget_request.cost_center
+    elif budget_request.custom_budget_against == 'Project':
+        monthly_dist.custom_project = budget_request.custom_project
+
     # حساب النسب الشهرية
     percentages = calculate_monthly_percentages_server([item])
     for row in percentages:
-        monthly_dist.append('percentages',row)
+        monthly_dist.append('percentages', row)
     monthly_dist.insert()
     frappe.db.commit()
     return monthly_dist
@@ -285,8 +324,14 @@ def create_budget_document_server(budget_request, accounts_table):
     try:
         print("\nBuilding budget document...")
         budget = frappe.new_doc("Budget")
-        budget.budget_against = "Cost Center"
-        budget.cost_center = budget_request.cost_center
+
+        # ✅ CHANGED: conditional budget_against
+        budget.budget_against = budget_request.custom_budget_against
+        if budget_request.custom_budget_against == 'Cost Center':
+            budget.cost_center = budget_request.cost_center
+        elif budget_request.custom_budget_against == 'Project':
+            budget.project = budget_request.custom_project
+
         budget.fiscal_year = budget_request.fiscal_year
         budget.custom_budget_control = budget_request.budget_control
         budget.custom_budget_request_reference = budget_request.name
@@ -309,7 +354,6 @@ def create_budget_document_server(budget_request, accounts_table):
             md_doc.custom_budget = budget.name
             md_doc.save(ignore_permissions=True)
 
-
         control_doc = frappe.get_doc("Budget Control", budget_request.budget_control)
         control_doc.db_set("budget", budget.name)
 
@@ -318,6 +362,8 @@ def create_budget_document_server(budget_request, accounts_table):
         print(f"Budget submitted, docstatus: {budget.docstatus}")
         frappe.db.commit()
         print(f"Budget submitted, docstatus: {budget.docstatus}")
+
+        return budget
 
     except Exception as e:
         print(f"ERROR in create_budget_document_server: {str(e)}")

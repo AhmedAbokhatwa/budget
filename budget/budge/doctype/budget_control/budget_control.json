@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "field:budget_name",
- "creation": "2025-08-23 11:26:23.886498",
+ "creation": "2026-06-11 16:49:19.672577",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -17,10 +17,10 @@
   "status",
   "budget",
   "section_break_kv81l",
-  "amended_from",
   "workflow_state",
   "section_break_hszwr",
-  "budget_html"
+  "budget_html",
+  "amended_from"
  ],
  "fields": [
   {
@@ -73,7 +73,8 @@
    "no_copy": 1,
    "options": "Budget Control",
    "print_hide": 1,
-   "read_only": 1
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "allow_on_submit": 1,
@@ -115,7 +116,7 @@
    "link_fieldname": "budget_control"
   }
  ],
- "modified": "2025-12-18 16:44:12.027780",
+ "modified": "2026-06-11 16:54:47.033558",
  "modified_by": "Administrator",
  "module": "budge",
  "name": "Budget Control",
