@@ -1,9 +1,9 @@
 [project]
 name = "budget"
 authors = [
-    { name = "Ahmed Abu-khatwa", email = "ahmedabukhatwa1@gmail.com"}
+    { name = "Ahmed Abu-khatwa", email = "ahmedabukhatwa1@gmail.com" }
 ]
-app_description = "Department-level monthly budget management for ERPNext. Allocate and adjust budgets month by month per department, with built-in increase/decrease control and a complete audit log for every change."requires-python = ">=3.10"
+description = "Department-level monthly budget management for ERPNext. Allocate and adjust budgets month by month per department, with built-in increase/decrease control and a complete audit log for every change."
 requires-python = ">=3.10"
 readme = "README.md"
 dynamic = ["version"]
@@ -28,19 +28,19 @@ select = [
     "RUF",
 ]
 ignore = [
-    "B017", # assertRaises(Exception) - should be more specific
-    "B018", # useless expression, not assigned to anything
-    "B023", # function doesn't bind loop variable - will have last iteration's value
-    "B904", # raise inside except without from
-    "E101", # indentation contains mixed spaces and tabs
-    "E402", # module level import not at top of file
-    "E501", # line too long
-    "E741", # ambiguous variable name
-    "F401", # "unused" imports
-    "F403", # can't detect undefined names from * import
-    "F405", # can't detect undefined names from * import
-    "F722", # syntax error in forward type annotation
-    "W191", # indentation contains tabs
+    "B017",
+    "B018",
+    "B023",
+    "B904",
+    "E101",
+    "E402",
+    "E501",
+    "E741",
+    "F401",
+    "F403",
+    "F405",
+    "F722",
+    "W191",
 ]
 typing-modules = ["frappe.types.DF"]
 
