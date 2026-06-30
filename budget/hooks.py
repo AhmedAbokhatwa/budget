@@ -1,9 +1,9 @@
 from . import __version__ as app_version
 
-app_name = "budget_controller"
-app_title = "budget controller"
+app_name = "budget"
+app_title = "Budget Expenses"
 app_publisher = "ahmed"
-app_description = "budget"
+app_description = "Department-level monthly budget management for ERPNext. Allocate and adjust budgets month by month per department, with built-in increase/decrease control and a complete audit log for every change."
 app_email = "ahmed"
 app_license = "MIT"
 
