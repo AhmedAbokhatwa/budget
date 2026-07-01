@@ -70,13 +70,13 @@ add_to_apps_screen = [
 
 # Installation
 # ------------
-after_install = "budget.setup.after_install"
+after_install = "budget.budget_control.after_install"
 
 # Uninstallation
 # ------------
 
 # before_uninstall = "budget.uninstall.before_uninstall"
-before_uninstall = "budget.setup.before_uninstall"
+before_uninstall = "budget.budget_control.before_uninstall"
 
 # Integration Setup
 # ------------------
