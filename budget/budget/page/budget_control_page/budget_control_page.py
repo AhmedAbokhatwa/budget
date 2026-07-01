@@ -208,7 +208,7 @@ def find_budget(cost_center, account, item_code):
             conditions += " AND ba.custom_item_code = %(item_code)s "
             filters["item_code"] = item_code
 
-        query = f"""
+        query = """
             SELECT
                 b.name as budget_name,
                 b.cost_center as cost_center,
@@ -217,8 +217,9 @@ def find_budget(cost_center, account, item_code):
                 ba.custom_monthly_distribution as monthly_distribution
             FROM `tabBudget` b
             LEFT JOIN `tabBudget Account` ba ON ba.parent = b.name
-            WHERE {conditions}
-        """
+            WHERE %s
+        """ % conditions
+
         result = frappe.db.sql(query, filters, as_dict=True)
 
         if len(result) > 1:
@@ -231,9 +232,7 @@ def find_budget(cost_center, account, item_code):
             return monthly_distribution
 
     except Exception as e:
-        frappe.log_error(f"Error finding budget: {str(e)}", "Budget Control")
-        return None
-
+        frappe.throw(_("Error finding budget"))
 
 def update_monthly_distribution(md_name, month, diff_amount, action):
     try:

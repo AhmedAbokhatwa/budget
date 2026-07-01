@@ -13,8 +13,8 @@ class BudgetRequest(Document):
         self.validate_duplicate_items()
 
     def on_submit(self):
-        self.posting_date = nowdate()
-        self.status = "Requested"
+        self.db_set("status", "Requested")
+        self.db_set("posting_date", nowdate())
         check_and_create_budget(self.name)
 
     def validate_cost_center(self):
@@ -173,8 +173,7 @@ def create_budget_with_distributions_server(budget_request):
     """
     try:
         accepted_items = [item for item in budget_request.budget_items_details if item.status == "Accepted"]
-        print('ssssssssssssssssssssssssssssssssssssssssssssssssssssss')
-        print('accepted_items',accepted_items)
+
         if not accepted_items:
             frappe.throw(_("No accepted budget items found to create budgets."))
 
@@ -188,25 +187,18 @@ def create_budget_with_distributions_server(budget_request):
                 "budget_amount": float(item.total or 0),
                 "custom_item_code": item.item_code
             }
-            # for Each Item ->  Monthly Distribution
+
             monthly_dist = create_monthly_distribution_server(budget_request, item)
             if monthly_dist:
-                print('monthly_dist',monthly_dist.name)
-                # إعداد الـ account budget
                 account_budget["custom_monthly_distribution"]= monthly_dist.name
-
                 accounts_table.append(account_budget)
 
-        # إنشاء البادجيت
         budget_name = create_budget_document_server(budget_request, accounts_table)
         return budget_name
 
     except Exception as e:
-        frappe.log_error(
-            title="Error creating budget",
-            message= frappe.get_traceback()
-            )
-        raise
+        frappe.db.rollback()
+        frappe.throw(_("Error creating budget"))
 
 def create_monthly_distribution_server(budget_request, item):
 
@@ -222,7 +214,7 @@ def create_monthly_distribution_server(budget_request, item):
     monthly_dist.custom_cost_center = budget_request.cost_center
     monthly_dist.custom_item_code = item.item_code
     monthly_dist.custom_department = budget_request.department
-    # حساب النسب الشهرية
+
     percentages = calculate_monthly_percentages_server([item])
     for row in percentages:
         monthly_dist.append('percentages',row)
@@ -230,52 +222,42 @@ def create_monthly_distribution_server(budget_request, item):
     return monthly_dist
 
 def create_budget_document_server(budget_request, accounts_table):
-    """
-    إنشاء البادجيت في الـ server
-    """
     try:
 
         budget = frappe.new_doc("Budget")
         budget.budget_against = "Cost Center"
         budget.cost_center = budget_request.cost_center
+
         if frappe.db.has_column("Budget", "fiscal_year"):
             budget.fiscal_year = budget_request.fiscal_year
         else:
             budget.from_fiscal_year = budget_request.fiscal_year
             budget.to_fiscal_year = budget_request.fiscal_year
+
         budget.custom_budget_request_reference = budget_request.name
         budget.applicable_on_purchase_order = 1
         budget.applicable_on_material_request = 1
         budget.applicable_on_booking_actual_expenses = 1
         budget.custom_action_if__monthly_budget_exceeded_on_po = 'Stop'
-        print(f"Adding {len(accounts_table)} accounts to budget...")
-        # إضافة الـ accounts
+
         for idx, account_data in enumerate(accounts_table):
             budget.append("accounts", account_data)
-            print(f"  - Added account {idx+1}: {account_data['account']}")
 
-        print("Inserting budget...")
         budget.insert()
-        print(f"Budget inserted with name: {budget.name}")
 
         for account_data in accounts_table:
             md_doc = frappe.get_doc("Monthly Distribution", account_data['custom_monthly_distribution'])
             md_doc.custom_budget = budget.name
             md_doc.save(ignore_permissions=True)
 
-        print("Submitting budget...")
         budget.submit()
-        print(f"Budget submitted, docstatus: {budget.docstatus}")
         return budget.name
 
     except Exception as e:
-        print(f"ERROR in create_budget_document_server: {str(e)}")
         frappe.db.rollback()
         frappe.throw(_("Error creating budget: {0}").format(str(e)))
+
 def calculate_monthly_percentages_server(items):
-    """
-    حساب النسب الشهرية في الـ server
-    """
     month_list = ["january", "february", "march", "april", "may", "june",
                   "july", "august", "september", "october", "november", "december"]
     month_names = ["January", "February", "March", "April", "May", "June",
@@ -284,7 +266,6 @@ def calculate_monthly_percentages_server(items):
     total = 0
     monthly_values = {}
 
-    # جمع القيم لكل شهر
     for item in items:
         for month in month_list:
             qty = float(getattr(item, month, 0) or 0)
@@ -292,7 +273,6 @@ def calculate_monthly_percentages_server(items):
             monthly_values[month] = monthly_values.get(month, 0) + value
             total += value
 
-    # إنشاء array النسب
     percentages = []
     for idx, name in enumerate(month_names):
         month_key = month_list[idx]

@@ -84,19 +84,16 @@ def get_columns():
 def get_data(filters):
     conditions, params = build_conditions(filters)
 
-    monthly_distributions = frappe.db.sql(
-        f"""
+    sql_query = """
         SELECT
             md.name,
             md.custom_expense_account  AS account,
             md.custom_cost_center      AS cost_center,
             md.custom_item_code        AS item_code
         FROM `tabMonthly Distribution` md
-        WHERE {conditions}
-        """,
-        params,
-        as_dict=True,
-    )
+        WHERE %s
+        """ % conditions
+    monthly_distributions = frappe.db.sql(sql_query, params, as_dict=True)
 
     if not monthly_distributions:
         return []

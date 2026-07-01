@@ -233,8 +233,6 @@ class BudgetControlLog(Document):
         except Exception as e:
             frappe.log_error(f"Error updating cache: {str(e)}", "Budget Control Log")
 
-# Server Methods for Budget Control Log
-
 @frappe.whitelist()
 def get_budget_control_logs(cost_center=None, from_date=None, to_date=None, limit=50):
     """Get budget control logs with filters"""
@@ -254,9 +252,10 @@ def get_budget_control_logs(cost_center=None, from_date=None, to_date=None, limi
             conditions.append("bcl.change_date <= %(to_date)s")
             values["to_date"] = to_date
 
+        # build WHERE clause safely
         where_clause = " AND ".join(conditions)
 
-        query = f"""
+        query = """
             SELECT
                 bcl.name,
                 bcl.cost_center,
@@ -273,24 +272,29 @@ def get_budget_control_logs(cost_center=None, from_date=None, to_date=None, limi
                 u.full_name as changed_by_name
             FROM `tabBudget Control Log` bcl
             LEFT JOIN `tabUser` u ON bcl.changed_by = u.name
-            WHERE {where_clause}
+            WHERE %s
             ORDER BY bcl.change_date DESC, bcl.change_time DESC
             LIMIT %(limit)s
-        """
+        """ % where_clause
 
         values["limit"] = limit
 
         return frappe.db.sql(query, values, as_dict=True)
 
     except Exception as e:
-        frappe.log_error(f"Error getting budget control logs: {str(e)}", "Budget Control Log Query")
-        return []
+        frappe.throw(_("Error getting budget control logs"))
 
 @frappe.whitelist()
 def get_budget_change_summary(cost_center=None, period="Monthly"):
     """Get summary of budget changes"""
     try:
-        date_format = "%Y-%m" if period == "Monthly" else "%Y-%m-%d"
+
+        date_format_map = {
+            "Monthly": "%Y-%m",
+            "Daily": "%Y-%m-%d"
+        }
+
+        date_format = date_format_map.get(period, "%Y-%m")
 
         conditions = ["bcl.docstatus = 1"]
         values = {}
@@ -301,9 +305,9 @@ def get_budget_change_summary(cost_center=None, period="Monthly"):
 
         where_clause = " AND ".join(conditions)
 
-        query = f"""
+        query = """
             SELECT
-                DATE_FORMAT(bcl.change_date, '{date_format}') as period,
+                DATE_FORMAT(bcl.change_date, %(date_format)s) as period,
                 COUNT(*) as total_changes,
                 SUM(ABS(bcl.change_amount)) as total_change_amount,
                 SUM(CASE WHEN bcl.change_amount > 0 THEN bcl.change_amount ELSE 0 END) as total_increases,
@@ -312,14 +316,19 @@ def get_budget_change_summary(cost_center=None, period="Monthly"):
                 COUNT(DISTINCT bcl.account) as affected_accounts
             FROM `tabBudget Control Log` bcl
             WHERE {where_clause}
-            GROUP BY DATE_FORMAT(bcl.change_date, '{date_format}')
+            GROUP BY DATE_FORMAT(bcl.change_date, %(date_format)s)
             ORDER BY period DESC
         """
+
+        values["date_format"] = date_format
 
         return frappe.db.sql(query, values, as_dict=True)
 
     except Exception as e:
-        frappe.log_error(f"Error getting budget change summary: {str(e)}", "Budget Control Log Summary")
+        frappe.log_error(
+            f"Error getting budget change summary: {str(e)}",
+            "Budget Control Log Summary"
+        )
         return []
 
 @frappe.whitelist()
