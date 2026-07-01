@@ -106,52 +106,17 @@ def check_and_create_budget(budget_request_name):
     Server-side method to check and create budget with proper locking mechanism
     """
     try:
-        # إنشاء database lock لمنع التكرار
+        budget_request = frappe.get_doc("Budget Request", budget_request_name)
 
-        frappe.db.sql("SELECT GET_LOCK(%s, 10)", (f"budget_creation_{budget_request_name}",))
+        if budget_request.budget_created:
+            frappe.throw(_("Budget already created for this request."))
 
-        try:
-            budget_request = frappe.get_doc("Budget Request", budget_request_name)
+        check_for_duplicate_budgets_server(budget_request)
 
-            # فحص إذا كان البادجيت اتعمل خلاص
-            if budget_request.budget_created:
-                frappe.throw("Budget already created for this request.")
-                # return {
-                #     "success": False,
-                #     "error": _("1Budget already created for this request.")
-                # }
+        budget_name = create_budget_with_distributions_server(budget_request)
 
-            # فحص للـ duplicate budgets
-            duplicate_check = check_for_duplicate_budgets_server(budget_request)
-            if duplicate_check["has_duplicate"]:
-                frappe.throw("Budget already created for this request.")
-                # return {
-                #     "success": False,
-                #     "error": duplicate_check["message"]
-                # }
-
-            # إنشاء البادجيت
-            budget_name = create_budget_with_distributions_server(budget_request)
-            if budget_name:
-                print("*************?????***************")
-                # تحديث الـ Budget Request
-                frappe.db.set_value("Budget Request", budget_request_name, "budget_created", 1)
-                frappe.db.commit()
-                frappe.msgprint(
-                    _("Budget {0} is created successfully").format(budget_name)
-                )
-
-                return {
-                    "success": True,
-                    "budget_name": budget_name
-                }
-            else:
-                frappe.throw("ERROR Create Budget")
-        finally:
-            frappe.db.sql(
-                "SELECT RELEASE_LOCK(%s)",
-                (f"budget_creation_{budget_request_name}",)
-            )
+        frappe.db.set_value("Budget Request", budget_request_name, "budget_created", 1)
+        frappe.msgprint(_("Budget {0} created successfully").format(budget_name))
 
     except Exception as e:
         frappe.db.rollback()
@@ -164,17 +129,15 @@ def check_and_create_budget(budget_request_name):
             "error": str(e)
         }
 
-def check_for_duplicate_budgets_server(budget_request):
-    """
-    Server-side duplicate budget check
-    """
-    try:
-        accepted_items = [item for item in budget_request.budget_items_details if item.status == "Accepted"]
-        fiscal_year = budget_request.fiscal_year
-        cost_center = budget_request.cost_center
 
-        for item in accepted_items:
-            # فحص وجود بادجيت مماثل
+def check_for_duplicate_budgets_server(budget_request):
+    accepted_items = [item for item in budget_request.budget_items_details if item.status == "Accepted"]
+    fiscal_year = budget_request.fiscal_year
+    cost_center = budget_request.cost_center
+
+
+    for item in accepted_items:
+        if frappe.db.has_column("Budget", "fiscal_year"):
             existing_budget = frappe.db.sql("""
                 SELECT b.name as budget_name
                 FROM `tabBudget` b
@@ -185,30 +148,24 @@ def check_for_duplicate_budgets_server(budget_request):
                 AND ba.custom_item_code = %s
                 AND b.docstatus != 2
             """, (cost_center, fiscal_year, item.expense_account, item.item_code), as_dict=True)
+        else:
+            existing_budget = frappe.db.sql("""
+                SELECT b.name as budget_name
+                FROM `tabBudget` b
+                JOIN `tabBudget Account` ba ON ba.parent = b.name
+                WHERE b.cost_center = %s
+                AND b.from_fiscal_year = %s
+                AND b.to_fiscal_year = %s
+                AND ba.account = %s
+                AND ba.custom_item_code = %s
+                AND b.docstatus != 2
+            """, (cost_center, fiscal_year, fiscal_year, item.expense_account, item.item_code), as_dict=True)
+        if existing_budget:
+            frappe.throw(_("Budget already exists: '{0}' for Cost Center '{1}', Account '{2}' in Fiscal Year {3} item is '{4}'").format(
+                existing_budget[0].budget_name, cost_center, item.expense_account, fiscal_year, item.item_code
+            ))
 
-            if existing_budget:
-                message = _("Budget already exists: '{0}' for Cost Center '{1}', Account '{2}' in Fiscal Year {3} item is '{4}' ").format(
-                    existing_budget[0].budget_name,
-                    cost_center,
-                    item.expense_account,
-                    fiscal_year,
-                    item.item_code
-                )
-                print('TTTTTTTTTTTTTTTTTTTTTTTTTTTTT')
-                frappe.throw(message)
-                return {
-                    "has_duplicate": True,
-                    "message": message
-                }
-
-        return {"has_duplicate": False}
-
-    except Exception as e:
-        frappe.log_error(
-            title="Error checking duplicates",
-            message=frappe.get_traceback()  # أو str(e) لكن كـ message مش title
-        )
-        raise
+    return {"has_duplicate": False}
 
 def create_budget_with_distributions_server(budget_request):
     """
@@ -236,19 +193,13 @@ def create_budget_with_distributions_server(budget_request):
             if monthly_dist:
                 print('monthly_dist',monthly_dist.name)
                 # إعداد الـ account budget
-                account_budget["custom_monthly_distribution"]= monthly_dist.name,
+                account_budget["custom_monthly_distribution"]= monthly_dist.name
 
                 accounts_table.append(account_budget)
 
         # إنشاء البادجيت
-        budget = create_budget_document_server(budget_request, accounts_table)
-        # print('budget',budget.name)
-        # monthly_dist.custom_budget = budget.name
-        # monthly_dist.save(ignore_permissions=True)
-        # monthly_dist.db_set("custom_budget", budget.name)
-        # frappe.db.commit()
-        # ربط الـ distributions بالبادجيت
-        return budget.name
+        budget_name = create_budget_document_server(budget_request, accounts_table)
+        return budget_name
 
     except Exception as e:
         frappe.log_error(
@@ -258,11 +209,14 @@ def create_budget_with_distributions_server(budget_request):
         raise
 
 def create_monthly_distribution_server(budget_request, item):
-    """
-    إنشاء Monthly Distribution في الـ server
-    """
+
+    dist_id = f"{budget_request.name}-{item.expense_account}"
+    if frappe.db.exists("Monthly Distribution", dist_id):
+        frappe.throw(_("Duplicate Monthly Distribution found for Expense Account '{0}' and Cost Center '{1}'").format(
+            item.expense_account, budget_request.cost_center))
+
     monthly_dist = frappe.new_doc("Monthly Distribution")
-    monthly_dist.distribution_id = f"{budget_request.name}-{item.expense_account}"
+    monthly_dist.distribution_id = dist_id
     monthly_dist.fiscal_year = budget_request.fiscal_year
     monthly_dist.custom_expense_account = item.expense_account
     monthly_dist.custom_cost_center = budget_request.cost_center
@@ -273,7 +227,6 @@ def create_monthly_distribution_server(budget_request, item):
     for row in percentages:
         monthly_dist.append('percentages',row)
     monthly_dist.insert()
-    frappe.db.commit()
     return monthly_dist
 
 def create_budget_document_server(budget_request, accounts_table):
@@ -281,11 +234,15 @@ def create_budget_document_server(budget_request, accounts_table):
     إنشاء البادجيت في الـ server
     """
     try:
-        print("\nBuilding budget document...")
+
         budget = frappe.new_doc("Budget")
         budget.budget_against = "Cost Center"
         budget.cost_center = budget_request.cost_center
-        budget.fiscal_year = budget_request.fiscal_year
+        if frappe.db.has_column("Budget", "fiscal_year"):
+            budget.fiscal_year = budget_request.fiscal_year
+        else:
+            budget.from_fiscal_year = budget_request.fiscal_year
+            budget.to_fiscal_year = budget_request.fiscal_year
         budget.custom_budget_request_reference = budget_request.name
         budget.applicable_on_purchase_order = 1
         budget.applicable_on_material_request = 1
@@ -309,16 +266,12 @@ def create_budget_document_server(budget_request, accounts_table):
         print("Submitting budget...")
         budget.submit()
         print(f"Budget submitted, docstatus: {budget.docstatus}")
-        frappe.db.commit()
-        print(f"Budget submitted, docstatus: {budget.docstatus}")
+        return budget.name
 
     except Exception as e:
         print(f"ERROR in create_budget_document_server: {str(e)}")
-        frappe.log_error(
-            title="Error creating budget document",
-            message=frappe.get_traceback()
-        )
-        raise
+        frappe.db.rollback()
+        frappe.throw(_("Error creating budget: {0}").format(str(e)))
 def calculate_monthly_percentages_server(items):
     """
     حساب النسب الشهرية في الـ server
@@ -351,140 +304,46 @@ def calculate_monthly_percentages_server(items):
         })
 
     return percentages
-
 @frappe.whitelist()
 def delete_budget_related_records(fiscal_year, department, cost_center):
-    """
-    Delete all budget-related records in correct order:
-    1. Monthly Distribution Percentages (Child)
-    2. Monthly Distribution (Parent)
-    3. Budget Accounts (Child)
-    4. Budget (Parent) - but first unlink from Budget Request
-    5. Budget Items Details (Child)
-    6. Budget Request (Parent)
-    """
-    try:
-        print("\n========== START DELETE BUDGET RECORDS ==========")
+    budget_requests = frappe.get_all(
+        "Budget Request",
+        filters={"fiscal_year": fiscal_year, "department": department, "cost_center": cost_center},
+        fields=["name"]
+    )
 
-        # Get all Budget Requests matching filters
-        budget_requests = frappe.get_all(
-            "Budget Request",
-            filters={
-                "fiscal_year": fiscal_year,
-                "department": department,
-                "cost_center": cost_center
-            },
-            fields=["name"]
-        )
+    for br in budget_requests:
+        br_name = br.name
+        try:
+            budgets = frappe.get_all(
+                "Budget",
+                filters={"custom_budget_request_reference": br_name},
+                fields=["name"]
+            )
 
-        print(f"Found {len(budget_requests)} Budget Requests")
+            for budget in budgets:
+                budget_name = budget.name
 
-        for br in budget_requests:
-            br_name = br.name
-            print(f"\n--- Processing Budget Request: {br_name} ---")
-
-            try:
-                # Get budgets linked to this Budget Request
-                budgets = frappe.get_all(
-                    "Budget",
-                    filters={"custom_budget_request_reference": br_name},
+                monthly_distributions = frappe.get_all(
+                    "Monthly Distribution",
+                    filters={"custom_budget": budget_name},
                     fields=["name"]
                 )
 
-                print(f"Found {len(budgets)} Budgets for {br_name}")
+                for md in monthly_distributions:
+                    frappe.db.delete("Monthly Distribution Percentage", {"parent": md.name})
+                    frappe.db.delete("Monthly Distribution", {"name": md.name})
 
-                # Process each budget
-                for budget in budgets:
-                    budget_name = budget.name
-                    print(f"  Deleting Budget: {budget_name}")
+                frappe.db.delete("Budget Account", {"parent": budget_name})
+                frappe.db.set_value("Budget", budget_name, "custom_budget_request_reference", None)
+                frappe.db.delete("Budget", {"name": budget_name})
 
-                    # 1️⃣ Delete Monthly Distribution Percentages first
-                    monthly_distributions = frappe.get_all(
-                        "Monthly Distribution",
-                        filters={"custom_budget": budget_name},
-                        fields=["name"]
-                    )
+            frappe.db.delete("Budget Items Details", {"parent": br_name})
+            frappe.db.delete("Budget Request", {"name": br_name})
 
-                    for md in monthly_distributions:
-                        md_name = md.name
-                        print(f"    - Deleting Monthly Distribution: {md_name}")
+        except Exception as e:
+            frappe.db.rollback()
+            frappe.throw(_("Error deleting records for Budget Request {0}: {1}").format(br_name, str(e)))
 
-                        # Delete percentages (child table)
-                        frappe.db.sql(
-                            "DELETE FROM `tabMonthly Distribution Percentage` WHERE parent=%s",
-                            (md_name,)
-                        )
-                        print(f" ✓ Deleted percentages")
-
-                        # Delete Monthly Distribution itself
-                        frappe.db.sql(
-                            "DELETE FROM `tabMonthly Distribution` WHERE name=%s",
-                            (md_name,)
-                        )
-                        print(f"      ✓ Deleted Monthly Distribution")
-
-                    # 2️⃣ Delete Budget Accounts (child table)
-                    frappe.db.sql(
-                        "DELETE FROM `tabBudget Account` WHERE parent=%s",
-                        (budget_name,)
-                    )
-                    print(f" ✓ Deleted Budget Accounts")
-
-                    # 3️⃣ Unlink budget from Budget Request BEFORE deleting
-                    frappe.db.sql(
-                        "UPDATE `tabBudget` SET custom_budget_request_reference=NULL WHERE name=%s",
-                        (budget_name,)
-                    )
-                    print(f"    ✓ Unlinked from Budget Request")
-
-                    # 4️⃣ Delete Budget itself
-                    frappe.db.sql(
-                        "DELETE FROM `tabBudget` WHERE name=%s",
-                        (budget_name,)
-                    )
-                    print(f"    ✓ Deleted Budget")
-
-                # 5️⃣ Now safe to delete Budget Request
-                # First delete Budget Items Details (child table)
-                frappe.db.sql(
-                    "DELETE FROM `tabBudget Items Details` WHERE parent=%s",
-                    (br_name,)
-                )
-                print(f"  ✓ Deleted Budget Items Details")
-
-                # Delete Budget Request itself
-                frappe.db.sql(
-                    "DELETE FROM `tabBudget Request` WHERE name=%s",
-                    (br_name,)
-                )
-                print(f"  ✓ Deleted Budget Request: {br_name}")
-
-                frappe.db.commit()
-
-            except Exception as e:
-                frappe.db.rollback()
-                print(f"ERROR processing {br_name}: {str(e)}")
-                frappe.log_error(
-                    title=f"Error deleting Budget Request {br_name}",
-                    message=frappe.get_traceback()
-                )
-                raise
-
-        print("\n========== DELETE COMPLETED SUCCESSFULLY ==========\n")
-
-        return {
-            "success": True,
-            "message": f"Successfully deleted all records for Budget"
-        }
-
-    except Exception as e:
-        frappe.db.rollback()
-        print(f"FATAL ERROR: {str(e)}")
-        frappe.log_error(
-            title="Error in delete_budget_related_records",
-            message=frappe.get_traceback()
-        )
-        return {
-            "success": False,
-            "error": str(e)
-        }
+    frappe.msgprint(_("Successfully deleted all records for Budget"))
+    return {"success": True, "message": "Successfully deleted all records for Budget"}
